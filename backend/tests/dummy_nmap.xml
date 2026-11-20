@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" args="nmap -sV -O -oX dummy.xml 192.168.1.0/24" start="1695916000" startstr="Mon Sep 28 10:00:00 2026" version="7.94" xmloutputversion="1.05">
+<host starttime="1695916000" endtime="1695916010">
+<status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.10" addrtype="ipv4"/>
+<hostnames>
+<hostname name="WEB01" type="user"/>
+</hostnames>
+<ports>
+<port protocol="tcp" portid="80">
+<state state="open" reason="syn-ack" reason_ttl="64"/>
+<service name="http" product="Apache httpd" version="2.4.41" method="probed" conf="10"/>
+</port>
+<port protocol="tcp" portid="443">
+<state state="open" reason="syn-ack" reason_ttl="64"/>
+<service name="ssl/http" product="Apache httpd" version="2.4.41" method="probed" conf="10"/>
+</port>
+</ports>
+<os>
+<osmatch name="Linux 5.4" accuracy="100" line="65432"/>
+</os>
+</host>
+<host starttime="1695916000" endtime="1695916015">
+<status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.20" addrtype="ipv4"/>
+<hostnames>
+<hostname name="DB01" type="user"/>
+</hostnames>
+<ports>
+<port protocol="tcp" portid="5432">
+<state state="open" reason="syn-ack" reason_ttl="64"/>
+<service name="postgresql" product="PostgreSQL DB" version="14.2" method="probed" conf="10"/>
+</port>
+</ports>
+<os>
+<osmatch name="Linux 5.10" accuracy="95" line="65432"/>
+</os>
+</host>
+<runstats>
+<finished time="1695916015" timestr="Mon Sep 28 10:00:15 2026" elapsed="15.00" summary="Nmap done at Mon Sep 28 10:00:15 2026; 2 IP addresses (2 hosts up) scanned in 15.00 seconds" exit="success"/>
+</runstats>
+</nmaprun>

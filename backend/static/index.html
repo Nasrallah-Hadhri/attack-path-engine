@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attack Path Engine - Cyber Lab</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --border-color: #30363d;
+            --accent: #58a6ff;
+            --accent-hover: #1f6feb;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --danger: #f85149;
+            --success: #2ea043;
+            --ai-color: #a371f7;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            display: flex; 
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Sidebar */
+        .sidebar {
+            width: 320px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .logo i { color: var(--danger); }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: auto;
+        }
+
+        button { 
+            background: var(--panel-bg); 
+            color: var(--text-main); 
+            border: 1px solid var(--border-color); 
+            padding: 12px 15px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-weight: 500; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        button:hover { 
+            background: #21262d; 
+            border-color: var(--text-muted);
+        }
+
+        button.ai-btn {
+            background: linear-gradient(145deg, #2d1e4a, #1a1025);
+            border-color: var(--ai-color);
+            color: #d2a8ff;
+        }
+        button.ai-btn:hover { background: linear-gradient(145deg, #3d2e5a, #2a2035); }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #network { 
+            flex-grow: 1; 
+            background-color: #090c10; 
+            background-image: radial-gradient(#21262d 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Bottom Panel for AI / Logs */
+        .bottom-panel {
+            height: 250px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+        }
+
+        .panel-header {
+            font-weight: bold;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .log-entry {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .log-entry.ai-report {
+            border-left: 3px solid var(--ai-color);
+            background: rgba(163, 113, 247, 0.05);
+            font-family: inherit;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-shield-halved"></i> Attack Path Engine
+        </div>
+
+        <div class="steps">
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;">Simulation Steps</div>
+            
+            <button onclick="uploadDummyData()">
+                <i class="fa-solid fa-network-wired" style="color: var(--accent);"></i> 
+                1. Ingest Nmap Discovery
+            </button>
+            
+            <button onclick="matchVulnerabilities()">
+                <i class="fa-solid fa-bug" style="color: var(--danger);"></i> 
+                2. Correlate Vulnerabilities
+            </button>
+            
+            <button onclick="findAttackPaths()">
+                <i class="fa-solid fa-route" style="color: var(--success);"></i> 
+                3. Map Attack Paths
+            </button>
+            
+            <button class="ai-btn" onclick="explainPath()">
+                <i class="fa-solid fa-robot"></i> 
+                4. AI Analyst Report
+            </button>
+        </div>
+        
+        <div style="margin-top: auto; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+            Mock Data: 192.168.1.10 → 192.168.1.20
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Interactive Graph -->
+        <div id="network"></div>
+        
+        <!-- Terminal / AI output -->
+        <div class="bottom-panel" id="terminal">
+            <div class="panel-header">System Output & Reports</div>
+            <div id="logs">
+                <div class="log-entry" style="border-color: var(--text-muted);">System initialized. Waiting for Nmap data ingestion...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let network = null;
+        let edgesDataset = null;
+        let nodesDataset = null;
+
+        function logMsg(msg, isAi = false) {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = isAi ? 'log-entry ai-report' : 'log-entry';
+            div.innerHTML = msg;
+            logs.prepend(div);
+        }
+
+        async function fetchAndDrawGraph() {
+            const res = await fetch('/api/analysis/graph');
+            const data = await res.json();
+            
+            const container = document.getElementById('network');
+            
+            nodesDataset = new vis.DataSet(data.nodes.map(n => {
+                let color = '#30363d';
+                let icon = '\uf233'; // server
+                if (n.group === 'Asset') { color = '#58a6ff'; icon = '\uf108'; } // desktop
+                else if (n.group === 'Service') { color = '#2ea043'; icon = '\uf013'; } // cog
+                else if (n.group === 'Vulnerability') { color = '#f85149'; icon = '\uf188'; } // bug
+
+                return {
+                    id: n.id, 
+                    label: n.label, 
+                    color: { background: color, border: '#161b22' },
+                    font: { color: '#c9d1d9', face: 'Segoe UI' },
+                    shape: 'icon',
+                    icon: { face: '"Font Awesome 6 Free"', code: icon, size: 40, color: color, weight: '900' }
+                };
+            }));
+            
+            edgesDataset = new vis.DataSet(data.edges.map(e => ({
+                id: e.from + '-' + e.to,
+                from: e.from, 
+                to: e.to, 
+                label: e.label, 
+                font: { color: '#8b949e', size: 12, align: 'top' }, 
+                arrows: 'to',
+                color: { color: '#30363d' },
+                smooth: { type: 'continuous' }
+            })));
+
+            const graphData = { nodes: nodesDataset, edges: edgesDataset };
+            const options = { 
+                physics: { barnesHut: { springLength: 150 } },
+                interaction: { hover: true, tooltipDelay: 200 }
+            };
+            
+            if (network) { network.destroy(); }
+            network = new vis.Network(container, graphData, options);
+        }
+
+        async function uploadDummyData() {
+            logMsg("Ingesting raw Nmap scan data...");
+            const res = await fetch('/api/nmap/load-dummy', {method: 'POST'});
+            const data = await res.json();
+            logMsg(`✅ ${data.message}`);
+            fetchAndDrawGraph();
+        }
+
+        async function matchVulnerabilities() {
+            logMsg("Querying CVE database and matching service versions...");
+            const res = await fetch('/api/analysis/match-vulns', {method: 'POST'});
+            const data = await res.json();
+            logMsg(`⚠️ ${data.message}`);
+            fetchAndDrawGraph();
+        }
+
+        async function findAttackPaths() {
+            logMsg("Calculating shortest vulnerable paths (NetworkX)...");
+            const res = await fetch('/api/analysis/attack-path?source_ip=192.168.1.10&target_ip=192.168.1.20');
+            const data = await res.json();
+            if(data.paths && data.paths.length > 0) {
+                const pathStr = data.paths[0].path.join(" ➔ ");
+                logMsg(`🚨 <b>Path Discovered!</b><br>${pathStr} <br>Risk Score: ${data.paths[0].risk_score}`);
+                
+                // Highlight the path in the graph!
+                const pathNodes = data.paths[0].path;
+                for(let i=0; i<pathNodes.length-1; i++) {
+                    const edgeId = pathNodes[i] + '-' + pathNodes[i+1];
+                    // Also check reverse direction just in case undirected
+                    const reverseEdgeId = pathNodes[i+1] + '-' + pathNodes[i];
+                    
+                    try { edgesDataset.update({id: edgeId, color: {color: '#f85149'}, width: 3}); } catch(e){}
+                    try { edgesDataset.update({id: reverseEdgeId, color: {color: '#f85149'}, width: 3}); } catch(e){}
+                }
+            } else {
+                logMsg("✅ No viable attack paths found.");
+            }
+        }
+
+        async function explainPath() {
+            logMsg("Sending graph topology to LLM Analyst...");
+            const res = await fetch('/api/analysis/explain-path?source_ip=192.168.1.10&target_ip=192.168.1.20');
+            const data = await res.json();
+            
+            // Format markdown-like bolding
+            let text = data.explanation.llm_response;
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\n/g, '<br>');
+            
+            logMsg(`<b>🤖 AI Security Report</b><br><br>${text}`, true);
+        }
+
+        // Initialize empty graph
+        fetchAndDrawGraph();
+    </script>
+</body>
+</html>
